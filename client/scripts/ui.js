@@ -9,7 +9,7 @@ window.iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 Events.on('display-name', e => {
     const me = e.detail.message;
     const $displayName = $('displayName')
-    $displayName.textContent = 'You are known as ' + me.displayName;
+    $displayName.textContent = '你被称为 ' + me.displayName;
     $displayName.title = me.deviceName;
 });
 
@@ -74,7 +74,7 @@ class PeerUI {
 
     html() {
         return `
-            <label class="column center" title="Click to send files or right click to send a text">
+            <label class="column center" title="单击以发送文件或右键单击以发送文本">
                 <input type="file" multiple>
                 <x-icon shadow="1">
                     <svg class="icon"><use xlink:href="#"/></svg>
@@ -269,7 +269,14 @@ class ReceiveDialog extends Dialog {
         if(file.mime.split('/')[0] === 'image'){
             console.log('the file is image');
             this.$el.querySelector('.preview').style.visibility = 'inherit';
+            this.$el.querySelector('#img-preview').removeAttribute('hidden');
             this.$el.querySelector("#img-preview").src = url;
+        }
+        if(file.mime.split('/')[0] === 'video'){
+            console.log('the file is video');
+            this.$el.querySelector('.preview').style.visibility = 'inherit';
+            this.$el.querySelector('#video-preview').removeAttribute('hidden');
+            this.$el.querySelector("#video-preview").src = url;
         }
 
         this.$el.querySelector('#fileName').textContent = file.name;
@@ -299,6 +306,9 @@ class ReceiveDialog extends Dialog {
     hide() {
         this.$el.querySelector('.preview').style.visibility = 'hidden';
         this.$el.querySelector("#img-preview").src = "";
+        this.$el.querySelector('#img-preview').setAttribute('hidden', "true");
+        this.$el.querySelector("#video-preview").src = "";
+        this.$el.querySelector('#video-preview').setAttribute('hidden', "true");
         super.hide();
         this._dequeueFile();
     }
@@ -375,7 +385,7 @@ class ReceiveTextDialog extends Dialog {
 
     async _onCopy() {
         await navigator.clipboard.writeText(this.$text.textContent);
-        Events.fire('notify-user', 'Copied to clipboard');
+        Events.fire('notify-user', '已复制到剪切板');
     }
 }
 
@@ -415,7 +425,7 @@ class Notifications {
                 Events.fire('notify-user', Notifications.PERMISSION_ERROR || 'Error');
                 return;
             }
-            this._notify('Even more snappy sharing!');
+            this._notify('更快速的分享');
             this.$button.setAttribute('hidden', 1);
         });
     }
@@ -449,10 +459,10 @@ class Notifications {
     _messageNotification(message) {
         if (document.visibilityState !== 'visible') {
             if (isURL(message)) {
-                const notification = this._notify(message, 'Click to open link');
+                const notification = this._notify(message, '点击打开链接');
                 this._bind(notification, e => window.open(message, '_blank', null, true));
             } else {
-                const notification = this._notify(message, 'Click to copy text');
+                const notification = this._notify(message, '点击复制文字');
                 this._bind(notification, e => this._copyText(message, notification));
             }
         }
@@ -460,7 +470,7 @@ class Notifications {
 
     _downloadNotification(message) {
         if (document.visibilityState !== 'visible') {
-            const notification = this._notify(message, 'Click to download');
+            const notification = this._notify(message, '点击下载');
             if (!window.isDownloadSupported) return;
             this._bind(notification, e => this._download(notification));
         }
@@ -474,7 +484,7 @@ class Notifications {
     _copyText(message, notification) {
         notification.close();
         if (!navigator.clipboard.writeText(message)) return;
-        this._notify('Copied text to clipboard');
+        this._notify('已复制到剪切板');
     }
 
     _bind(notification, handler) {
@@ -498,11 +508,11 @@ class NetworkStatusUI {
     }
 
     _showOfflineMessage() {
-        Events.fire('notify-user', 'You are offline');
+        Events.fire('notify-user', '您已离线');
     }
 
     _showOnlineMessage() {
-        Events.fire('notify-user', 'You are back online');
+        Events.fire('notify-user', '您已恢复在线');
     }
 }
 
@@ -521,7 +531,7 @@ class WebShareTargetUI {
         if (!shareTargetText) return;
         window.shareTargetText = shareTargetText;
         history.pushState({}, 'URL Rewrite', '/');
-        console.log('Shared Target Text:', '"' + shareTargetText + '"');
+        console.log('分享文本:', '"' + shareTargetText + '"');
     }
 }
 
@@ -632,10 +642,10 @@ Events.on('load', () => {
 });
 
 Notifications.PERMISSION_ERROR = `
-Notifications permission has been blocked
-as the user has dismissed the permission prompt several times.
-This can be reset in Page Info
-which can be accessed by clicking the lock icon next to the URL.`;
+通知权限已被阻止
+因为用户已经多次关闭权限提示。
+这可以在页面信息中重置
+可以通过单击 URL 旁边的锁定图标来访问。`;
 
 document.body.onclick = e => { // safari hack to fix audio
     document.body.onclick = null;
